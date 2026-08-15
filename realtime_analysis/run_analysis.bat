@@ -11,4 +11,7 @@ if not exist "%PY%" (
 echo.
 echo ===== 算法契合度分析 =====
 "%PY%" analyze_fit.py
+echo.
+echo ===== 帖子生命周期分析 =====
+"%PY%" analyze_lifecycle.py
 pause

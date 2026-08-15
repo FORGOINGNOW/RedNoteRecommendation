@@ -22,6 +22,7 @@ matplotlib.use("Agg")
 import pandas as pd
 
 import analyze_fit as F
+import analyze_lifecycle as L
 import analyze_xhs as A
 
 
@@ -96,7 +97,38 @@ def main():
     fit_html = F.build_html(fdf, r2_full, inc, coefs, buckets, out_dir)
     (out_dir / "report_fit.html").write_text(fit_html, encoding="utf-8")
 
-    # 5) 全样本爆款榜
+    # 5) 帖子生命周期（互动 × 发布时长）
+    lm = L.compute_metrics(df, now_ts)
+    life_buckets = [
+        {"age": r["年龄"], "notes": int(r["笔记数"]), "median_interact": int(r["中位互动"]),
+         "median_velocity": int(r["中位日均互动"]), "boom_rate": round(float(r["爆款率(≥1k)"]), 3)}
+        for _, r in lm["bucket"].iterrows()
+    ]
+    life_cats = [
+        {"name": r["品类"], "median_age": int(r["中位年龄(天)"]), "velocity": int(r["中位日均互动"]),
+         "type": r["生命周期类型"]}
+        for _, r in lm["cat_life"].iterrows()
+    ]
+    life_slopes = [{"name": k, "slope": round(v[0], 2), "r2": round(v[1], 3)}
+                   for k, v in lm["slope_by_cat"].items()]
+    lifecycle = {
+        "half_life_days": round(lm["half_life"], 1) if lm["half_life"] != float("inf") else None,
+        "overall_slope": round(lm["overall_slope"], 3),
+        "fast_boom_ratio": round(lm["fast_ratio"], 3),
+        "tail_boom_ratio": round(lm["tail_ratio"], 3),
+        "age_buckets": life_buckets,
+        "category_life": life_cats,
+        "category_slopes": life_slopes,
+        "report_html": str(out_dir / "report_lifecycle.html"),
+    }
+
+    # 生成生命周期报告
+    L.make_charts(lm["df"], lm["slope_by_cat"], lm["half_life"], out_dir)
+    life_html = L.build_html(lm["df"], lm["bucket"], lm["cat_life"], lm["slope_by_cat"],
+                             lm["half_life"], lm["fast_ratio"], lm["tail_ratio"], out_dir)
+    (out_dir / "report_lifecycle.html").write_text(life_html, encoding="utf-8")
+
+    # 6) 全样本爆款榜
     top_all = df.nlargest(10, "interact")[["title", "interact", "note_url", "keyword"]]
     top_all_list = [
         {"title": r["title"][:44], "interact": int(r["interact"]),
@@ -117,6 +149,7 @@ def main():
         "top_coefs": [{"name": str(k), "abs": round(float(v), 3)}
                       for k, v in coefs.abs().sort_values(ascending=False).head(8).items()],
         "buckets": bucket_rows,
+        "lifecycle": lifecycle,
         "top_notes": top_all_list,
         "report_html": str(out_dir / "report.html"),
         "fit_report_html": str(out_dir / "report_fit.html"),

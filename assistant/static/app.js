@@ -155,6 +155,21 @@ function renderAnalysis(r) {
   } else {
     $('bucketTable').innerHTML = '<p class="hint">样本不足，暂无分桶画像</p>';
   }
+
+  const lc = r.lifecycle;
+  if (lc && lc.age_buckets && lc.age_buckets.length) {
+    $('lifeCards').innerHTML = [
+      ['热度半衰期', (lc.half_life_days ? lc.half_life_days + ' 天' : '—')],
+      ['7天内速成爆款率', (lc.fast_boom_ratio * 100).toFixed(0) + '%'],
+      ['90天+长青爆款率', (lc.tail_boom_ratio * 100).toFixed(0) + '%'],
+    ].map(c => '<div class="m-card"><b>' + esc(c[0]) + '</b><span>' + esc(c[1]) + '</span></div>').join('');
+    const rows = lc.age_buckets.map(b =>
+      '<tr><td>' + esc(b.age) + '</td><td>' + b.notes + '</td><td>' + fmtInt(b.median_interact)
+      + '</td><td>' + b.median_velocity + '/天</td><td>' + (b.boom_rate * 100).toFixed(0) + '%</td></tr>').join('');
+    $('lifeTable').innerHTML = '<table><thead><tr><th>发布后</th><th>笔记数</th><th>中位互动</th><th>中位日均互动</th><th>爆款率</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  } else {
+    $('lifeTable').innerHTML = '<p class="hint">样本不足，暂无生命周期数据</p>';
+  }
 }
 
 // ---------- Step 4 入场建议 ----------
