@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小红书推荐系统 Pipeline 模拟器</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>小红书推荐系统 Pipeline 模拟器</h1>
+  <p class="sub"><span id="engineBadge" class="engine-badge">检测引擎中…</span> · 召回 → 粗排 → 精排 → 重排 · 流量池晋级 · 教学模拟（非官方算法）</p>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="tab1">推荐链路</button>
+  <button class="tab" data-tab="tab2">流量池模拟</button>
+  <button class="tab" data-tab="tab3">机制速查</button>
+</nav>
+
+<!-- ================= Tab 1 推荐链路 ================= -->
+<section id="tab1" class="panel active">
+  <div class="grid3">
+    <aside class="controls">
+      <div class="card">
+        <h2>用户画像</h2>
+        <div id="personaPicker"></div>
+        <h3 class="mini">用户向量（8维兴趣分布）</h3>
+        <div id="userVecBars"></div>
+        <h3 class="mini">浏览历史（Item-CF 种子）</h3>
+        <div id="userHistory" class="hist-tags"></div>
+      </div>
+      <div class="card">
+        <h2>精排多目标权重</h2>
+        <p class="hint">模拟平台对 CTR / 完读率 / 互动率 / 关注率 的融合权重，拖动即时重排</p>
+        <div id="weightSliders"></div>
+        <button id="rerunBtn" class="btn">重新运行（重采样噪声）</button>
+      </div>
+    </aside>
+
+    <main class="pipe">
+      <div id="flowStrip" class="flow"></div>
+      <div id="stageRecall" class="stage s-recall"></div>
+      <div id="stageRough" class="stage s-rough"></div>
+      <div id="stageFine" class="stage s-fine"></div>
+      <div id="stageRerank" class="stage s-rerank"></div>
+    </main>
+
+    <aside class="viz">
+      <div class="card">
+        <h2>Embedding 空间（PCA 降维）</h2>
+        <div id="scatter"></div>
+        <div id="legend" class="legend"></div>
+      </div>
+      <div class="card">
+        <h2>最终推荐 Feed（按序曝光）</h2>
+        <div id="feed" class="feed-grid"></div>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<!-- ================= Tab 2 流量池模拟 ================= -->
+<section id="tab2" class="panel">
+  <div class="grid2">
+    <aside class="controls">
+      <div class="card">
+        <h2>创作一篇笔记</h2>
+        <label class="fld">标题
+          <input type="text" id="noteTitle" value="早八打工人10分钟伪素颜公式">
+        </label>
+        <label class="fld">封面风格
+          <select id="coverSelect"></select>
+        </label>
+        <label class="fld">内容质量（你的干货程度）
+          <input type="range" id="qualitySlider" min="0" max="1" step="0.05" value="0.5">
+          <span id="qualityVal" class="range-val">0.50</span>
+        </label>
+        <label class="fld">账号权重
+          <select id="authorSelect"></select>
+        </label>
+        <label class="fld">赛道
+          <select id="trackSelect"></select>
+        </label>
+        <div class="btn-row">
+          <button id="publishBtn" class="btn">发布并模拟分发</button>
+          <button id="batchBtn" class="btn ghost">模拟发布 10 次</button>
+        </div>
+        <p class="hint">CES = 赞×1 + 藏×1 + 评×4 + 转×4 + 关注×8（每千次曝光）</p>
+      </div>
+    </aside>
+    <main class="pipe">
+      <div id="poolFlow" class="pool-flow"></div>
+      <div id="poolTable" class="tbl-wrap"></div>
+      <div id="verdictBox"></div>
+      <div id="histBox"></div>
+    </main>
+  </div>
+</section>
+
+<!-- ================= Tab 3 机制速查 ================= -->
+<section id="tab3" class="panel">
+  <div class="info-grid">
+    <div class="info-card"><h3>双塔召回（DSSM）</h3><p>用户塔和笔记塔各输出一个向量，用余弦相似度取 TopN，向量检索支撑亿级候选。</p><em>对应模拟器：推荐链路 → 召回通道「双塔向量」</em></div>
+    <div class="info-card"><h3>协同过滤（Item-CF）</h3><p>「看过A的人也在看B」：基于笔记间共现矩阵召回相似内容。</p><em>对应模拟器：召回通道「Item-CF」</em></div>
+    <div class="info-card"><h3>内容/关键词召回</h3><p>标签倒排索引 + 标题关键词命中，同时支撑搜索页 SEO 长尾流量。</p><em>对应模拟器：召回通道「关键词」</em></div>
+    <div class="info-card"><h3>热度召回</h3><p>热门 + 新鲜内容兜底，解决新用户冷启动问题。</p><em>对应模拟器：召回通道「热度」</em></div>
+    <div class="info-card"><h3>精排多任务模型（MMoE/PLE）</h3><p>共享底层特征，多个专家网络分别预估 CTR、完读率、互动率、关注率，再按平台战略加权融合。</p><em>对应模拟器：精排层，可拖动权重观察排序变化</em></div>
+    <div class="info-card"><h3>行为序列建模（DIN/DIEN）</h3><p>用 Attention 建模「用户点了什么、最近点了什么」，重点看近期行为。</p><em>对应模拟器：用户画像向量 + 浏览历史种子</em></div>
+    <div class="info-card"><h3>重排规则</h3><p>多样性打散（MMR，同类不连续刷屏）、新鲜度、质量兜底、广告混排。</p><em>对应模拟器：重排层</em></div>
+    <div class="info-card"><h3>流量池晋级</h3><p>小池表现好→进大池。发布后 1-6 小时实时特征持续更新，决定晋级或停止。</p><em>对应模拟器：Tab2 流量池模拟</em></div>
+  </div>
+</section>
+
+<script src="data.js"></script>
+<script src="viz.js"></script>
+<script src="pipeline.js"></script>
+<script src="simulator.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
