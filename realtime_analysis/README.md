@@ -6,13 +6,14 @@
 
 1. 配置采集关键词：`E:\数据分析\MediaCrawler\config\base_config.py` 中的 `KEYWORDS`
 2. 运行采集：`E:\数据分析\MediaCrawler\.venv\Scripts\python.exe main.py`（扫码登录后自动采集，输出 jsonl 到 `MediaCrawler\data\xhs\jsonl\`）
-3. 运行分析：双击 `run_analysis.bat`（或手动执行 analyze_xhs.py）
+3. 运行分析：双击 `run_analysis.bat`（生成两份报告：流量分布 + 算法契合度）
 
 ## 输出
 
 | 产物 | 说明 |
 |---|---|
 | `report/report.html` | 自包含 HTML 报告（含图表） |
+| `report/report_fit.html` | 算法契合度报告（玩法 vs 内容 vs 品类解释力） |
 | `report/notes.csv` | 清洗后的笔记明细（UTF-8 BOM，可直接用 Excel 打开） |
 | `report/chart_*.png` | 各分析图表 |
 

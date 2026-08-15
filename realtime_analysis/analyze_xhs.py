@@ -117,6 +117,26 @@ def parse_json_str(v):
         return None
 
 
+def parse_tags(v):
+    """兼容两种存储格式：JSON 数组 或 逗号分隔字符串"""
+    if not v or not isinstance(v, str):
+        return []
+    parsed = parse_json_str(v)
+    if parsed is not None:
+        return [t.get("name", "") for t in parsed if isinstance(t, dict)]
+    return [t.strip() for t in v.split(",") if t.strip()]
+
+
+def count_images(v):
+    """兼容两种存储格式：JSON 数组 或 逗号分隔的 URL 列表"""
+    if not v or not isinstance(v, str):
+        return 0
+    parsed = parse_json_str(v)
+    if parsed is not None:
+        return len(parsed)
+    return len([u for u in v.split(",") if u.strip()])
+
+
 def load_notes(data_dir):
     frames = []
     for path in sorted(glob.glob(str(Path(data_dir) / "search_contents_*.jsonl"))):
@@ -130,8 +150,8 @@ def load_notes(data_dir):
                     d = json.loads(line)
                 except ValueError:
                     continue
-                tags = parse_json_str(d.get("tag_list")) or []
-                imgs = parse_json_str(d.get("image_list")) or []
+                tags = parse_tags(d.get("tag_list"))
+                imgs = count_images(d.get("image_list"))
                 rows.append({
                     "note_id": d.get("note_id"),
                     "title": d.get("title", ""),
@@ -142,8 +162,8 @@ def load_notes(data_dir):
                     "collected": safe_int(d.get("collected_count")),
                     "comment": safe_int(d.get("comment_count")),
                     "shared": safe_int(d.get("share_count")),
-                    "images": len(imgs),
-                    "tags": ",".join(t.get("name", "") for t in tags),
+                    "images": imgs,
+                    "tags": ",".join(tags),
                     "keyword": d.get("source_keyword", ""),
                     "publish_ts": safe_int(d.get("time")),
                     "note_url": d.get("note_url", ""),

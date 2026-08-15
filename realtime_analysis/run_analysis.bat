@@ -8,4 +8,7 @@ if not exist "%PY%" (
   exit /b 1
 )
 "%PY%" analyze_xhs.py
+echo.
+echo ===== 算法契合度分析 =====
+"%PY%" analyze_fit.py
 pause
