@@ -38,9 +38,10 @@ $('toStep5Btn').addEventListener('click', () => showStep(5));
 async function loadEnv() {
   env = await api('/env');
   const chips = [];
-  chips.push(['采集器环境', env.venv_ok ? 'ok' : 'bad', env.venv_ok ? '采集器就绪' : '未找到采集器']);
+  chips.push(['采集器环境', env.venv_ok ? 'ok' : 'bad', env.venv_ok ? '采集器就绪' : '未找到（运行 setup.bat 自动安装）']);
   chips.push(['已有数据', env.notes > 0 ? 'ok' : 'warn', env.notes + ' 条笔记']);
   chips.push(['分析报告', env.results_exists ? 'ok' : 'warn', env.results_exists ? '已生成' : '未生成']);
+  if (env.media_dir) chips.push(['采集器目录', 'warn', env.media_dir]);
   $('envChips').innerHTML = chips.map(c =>
     '<span class="chip-' + c[1] + '">' + c[0] + '：' + c[2] + '</span>').join('');
   $('kwInput').value = env.config.keywords;
@@ -48,6 +49,7 @@ async function loadEnv() {
   $('maxNotesVal').textContent = env.config.max_notes;
   $('llmKey').value = '';
   if (env.config.llm_key_set) $('llmKey').placeholder = '已配置（留空则保持不变）';
+  if (env.media_dir) $('mediaDir').value = env.media_dir;
 }
 loadEnv();
 
@@ -62,6 +64,7 @@ $('saveCfgBtn').addEventListener('click', async () => {
   const body = {
     keywords: $('kwInput').value.trim(),
     max_notes: +$('maxNotes').value,
+    media_dir: $('mediaDir').value.trim(),
     llm: { api_key: $('llmKey').value, base_url: $('llmUrl').value, model: $('llmModel').value },
   };
   if (!body.keywords) { $('cfgMsg').textContent = '请填写至少 1 个关键词'; return; }

@@ -39,12 +39,16 @@
     </div>
     <div class="fld">
       <details>
-        <summary>可选：接入大模型（不填也能用，规则引擎自动生成建议）</summary>
+        <summary>高级设置（首次使用/换电脑时看这里）</summary>
         <div class="llm-grid">
+          <label class="fld">MediaCrawler 目录（自动检测，找不到时手动填）
+            <input type="text" id="mediaDir" placeholder="例如 E:\MediaCrawler">
+          </label>
           <label class="fld">API Key<input type="password" id="llmKey" placeholder="DeepSeek API Key（可选）"></label>
           <label class="fld">接口地址<input type="text" id="llmUrl" value="https://api.deepseek.com"></label>
           <label class="fld">模型<input type="text" id="llmModel" value="deepseek-chat"></label>
         </div>
+        <p class="hint">环境未就绪时，运行项目根目录的 setup.bat 可自动安装采集器与依赖。</p>
       </details>
     </div>
     <div class="btn-row">

@@ -38,9 +38,25 @@ MIME = {
 }
 
 
+def detect_media_dir(cfg_media):
+    """自动探测 MediaCrawler 目录：配置值 → 项目同级 → 项目内 → 常见路径"""
+    candidates = [
+        cfg_media,
+        str(PROJECT.parent / "MediaCrawler"),
+        str(PROJECT / "MediaCrawler"),
+        "E:/数据分析/MediaCrawler",
+        "E:/MediaCrawler",
+        "C:/MediaCrawler",
+    ]
+    for c in candidates:
+        if c and Path(c).exists() and (Path(c) / "config" / "base_config.py").exists():
+            return str(Path(c))
+    return cfg_media
+
+
 def load_config():
     default = {
-        "media_dir": "E:/数据分析/MediaCrawler",
+        "media_dir": "",
         "keywords": "AI,Agent,人工智能,英文学习,职场转型,大模型应用",
         "max_notes": 100,
         "llm": {"api_key": "", "base_url": "https://api.deepseek.com", "model": "deepseek-chat"},
@@ -51,11 +67,15 @@ def load_config():
             for k, v in default.items():
                 cfg.setdefault(k, v)
             cfg.setdefault("llm", default["llm"])
-            return cfg
         except ValueError:
-            pass
-    CONFIG_FILE.write_text(json.dumps(default, ensure_ascii=False, indent=2), encoding="utf-8")
-    return default
+            cfg = dict(default)
+    else:
+        cfg = dict(default)
+    resolved = detect_media_dir(cfg.get("media_dir", ""))
+    if resolved != cfg.get("media_dir"):
+        cfg["media_dir"] = resolved
+        save_config(cfg)
+    return cfg
 
 
 def save_config(cfg):
@@ -131,6 +151,7 @@ def env_info(cfg):
     return {
         "media_dir_exists": media.exists(),
         "venv_ok": vp.exists(),
+        "media_dir": cfg["media_dir"],
         "data_dir": str(dd),
         "notes": notes,
         "comments": comments,
@@ -169,6 +190,8 @@ def handle_api(handler, method, path, body):
     if method == "POST" and path == "/api/config":
         cfg["keywords"] = str(body.get("keywords", cfg["keywords"])).strip() or cfg["keywords"]
         cfg["max_notes"] = int(body.get("max_notes", cfg["max_notes"]))
+        if body.get("media_dir"):
+            cfg["media_dir"] = str(body["media_dir"]).strip()
         llm = body.get("llm") or {}
         cfg["llm"]["api_key"] = str(llm.get("api_key", cfg["llm"].get("api_key", ""))).strip()
         cfg["llm"]["base_url"] = str(llm.get("base_url", cfg["llm"].get("base_url", "https://api.deepseek.com"))).strip()
