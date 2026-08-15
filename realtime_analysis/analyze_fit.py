@@ -125,22 +125,24 @@ def zscore(df, cols):
 
 
 def incremental_r2(df):
-    """全模型 R² 与各特征组增量解释力"""
+    """全模型 R² 与各特征组增量解释力（采样控制：笔记年龄 + 来源关键词）"""
     base = FEATURE_GROUPS["时效控制"]
+    kw_dummies = [c for c in df.columns if c.startswith("kw_")]
     cat_dummies = [c for c in df.columns if c.startswith("cat_")]
     mech = FEATURE_GROUPS["算法玩法"]
     content = FEATURE_GROUPS["内容干货"]
     acct = FEATURE_GROUPS["账号"]
 
-    all_feats = base + mech + content + acct + cat_dummies
+    ctrl = base + kw_dummies
+    all_feats = ctrl + mech + content + acct + cat_dummies
     r2_full, beta_full = ols(df, all_feats)
 
     results = {}
-    results["时效控制(单独)"] = ols(df, base)[0]
-    results["算法玩法(单独)"] = ols(df, base + mech)[0] - results["时效控制(单独)"]
-    results["内容干货(单独)"] = ols(df, base + content)[0] - results["时效控制(单独)"]
-    results["账号(单独)"] = ols(df, base + acct)[0] - results["时效控制(单独)"]
-    results["品类(单独)"] = ols(df, base + cat_dummies)[0] - results["时效控制(单独)"]
+    results["采样控制(年龄+关键词)"] = ols(df, ctrl)[0]
+    results["算法玩法(单独)"] = ols(df, ctrl + mech)[0] - results["采样控制(年龄+关键词)"]
+    results["内容干货(单独)"] = ols(df, ctrl + content)[0] - results["采样控制(年龄+关键词)"]
+    results["账号(单独)"] = ols(df, ctrl + acct)[0] - results["采样控制(年龄+关键词)"]
+    results["品类(单独)"] = ols(df, ctrl + cat_dummies)[0] - results["采样控制(年龄+关键词)"]
 
     # 逐个剔除组看损失
     for name, feats in [("算法玩法", mech), ("内容干货", content), ("账号", acct), ("品类", cat_dummies)]:
@@ -196,9 +198,12 @@ def build_html(df, r2_full, inc, coefs, bucket, out_dir: Path):
     n = len(df)
     top_mech = inc.get("算法玩法(单独)", 0)
     top_content = inc.get("内容干货(单独)", 0)
+    pool_r2 = inc.get("采样控制(年龄+关键词)", 0)
     verdict = ("玩法层(标题/标签/时段)解释力更强 → 精排模型可见信息对流量影响更大"
                if top_mech > top_content else
                "内容干货层解释力更强 → 内容实质比表面玩法更重要")
+    if pool_r2 > 0.2:
+        verdict += f"。且「关键词赛道池」是主导变量（解释 {pool_r2:.0%}）——选择在哪个赛道里竞争，比任何运营技巧都重要"
 
     return f"""<!DOCTYPE html>
 <html lang="zh-CN"><head><meta charset="UTF-8"><title>算法契合度分析报告</title>
@@ -225,7 +230,7 @@ section{{background:#1e1e28;border:1px solid #32323f;border-radius:12px;padding:
   <div><b>{top_content:.2%}</b><span>内容干货层贡献</span></div>
   <div><b>{inc.get('品类(单独)',0):.2%}</b><span>品类(选题)贡献</span></div>
   <div><b>{inc.get('账号(单独)',0):.2%}</b><span>账号贡献</span></div>
-  <div><b>{inc.get('时效控制(单独)',0):.2%}</b><span>笔记年龄贡献</span></div>
+  <div><b>{inc.get('采样控制(年龄+关键词)',0):.2%}</b><span>采样控制(年龄+关键词)</span></div>
 </div>
 <section><h2>各因素解释力对比</h2>{img_html(out_dir/'chart_inc.png')}{inc_df.to_html(classes='tbl', escape=False)}</section>
 <section><h2>全模型标准化系数（对 log 互动的影响方向与大小）</h2>{img_html(out_dir/'chart_coef.png')}{coef_table.to_html(classes='tbl', escape=False, index=False)}
@@ -313,9 +318,10 @@ def main():
     now_ts = max(df["publish_ts"].max(), int(datetime.now().timestamp() * 1000))
     df = build_features(df, now_ts)
 
-    # 品类哑变量
+    # 品类哑变量 + 关键词哑变量（采样控制）
     cats = pd.get_dummies(df["category"], prefix="cat").astype(int)
-    df = pd.concat([df, cats], axis=1)
+    kwds = pd.get_dummies(df["keyword"], prefix="kw").astype(int)
+    df = pd.concat([df, cats, kwds], axis=1)
 
     r2_full, inc, coefs = incremental_r2(df)
     bucket = bucket_analysis(df)
