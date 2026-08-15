@@ -23,6 +23,10 @@
 - 大模型 API Key 可选：不填用内置规则引擎生成建议，填了 DeepSeek Key 则 AI 润色
 - 日常使用只需双击 `assistant/start_assistant.bat`（已装过环境之后）
 
+### 方式三：让 AI Agent 帮你装
+
+仓库根目录的 `AGENT_SETUP.md` 是写给 AI Agent 的安装指令：把它粘贴给任意 AI Agent（opencode/Claude 等），agent 会自动完成 克隆 → 装环境 → 启动 → 配置 → 采集 → 分析 全流程，唯一需要人工的一步是扫码登录（agent 无法代扫）。Agent 也可以通过助手内置的 REST API 全程驱动（见该文件末尾的 API 速查表）。
+
 ### 注意事项
 
 - setup 脚本与采集功能目前只支持 Windows
