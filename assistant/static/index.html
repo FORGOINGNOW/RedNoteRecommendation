@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小红书赛道筛选 AI 助手</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header>
+  <h1>小红书赛道筛选 AI 助手</h1>
+  <p class="sub">五步走：赛道分析 → 数据采集 → 标签数据分析 → 入场建议 → 运营方案</p>
+  <div id="envChips" class="env-chips">正在检测环境…</div>
+</header>
+
+<nav class="steps">
+  <button class="step active" data-step="1"><i>1</i>赛道分析</button>
+  <button class="step" data-step="2"><i>2</i>数据采集</button>
+  <button class="step" data-step="3"><i>3</i>标签数据分析</button>
+  <button class="step" data-step="4"><i>4</i>入场建议</button>
+  <button class="step" data-step="5"><i>5</i>运营方案</button>
+</nav>
+
+<!-- ============ Step 1 赛道分析 ============ -->
+<section id="sec1" class="sec active">
+  <div class="card">
+    <h2>你想做的赛道是？（配置采集关键词）</h2>
+    <p class="hint">填 2-6 个关键词，用英文逗号隔开。助手会采集这些关键词下的热门笔记，分析真实流量结构。</p>
+    <textarea id="kwInput" rows="3" placeholder="例如：AI,Agent,英文学习,职场转型,大模型应用"></textarea>
+    <div class="fld-row">
+      <label class="fld">每个关键词采集笔记数
+        <input type="range" id="maxNotes" min="20" max="200" step="20" value="100">
+        <span id="maxNotesVal" class="range-val">100</span>
+      </label>
+      <label class="fld">预计采集耗时
+        <span id="etaText" class="eta">约 1-2 小时（可中断续跑）</span>
+      </label>
+    </div>
+    <div class="fld">
+      <details>
+        <summary>可选：接入大模型（不填也能用，规则引擎自动生成建议）</summary>
+        <div class="llm-grid">
+          <label class="fld">API Key<input type="password" id="llmKey" placeholder="DeepSeek API Key（可选）"></label>
+          <label class="fld">接口地址<input type="text" id="llmUrl" value="https://api.deepseek.com"></label>
+          <label class="fld">模型<input type="text" id="llmModel" value="deepseek-chat"></label>
+        </div>
+      </details>
+    </div>
+    <div class="btn-row">
+      <button class="btn" id="saveCfgBtn">保存配置</button>
+      <button class="btn ghost" id="toStep2Btn">下一步：数据采集</button>
+    </div>
+    <p id="cfgMsg" class="msg"></p>
+  </div>
+</section>
+
+<!-- ============ Step 2 数据采集 ============ -->
+<section id="sec2" class="sec">
+  <div class="card">
+    <h2>数据采集（自动调用开源采集器 MediaCrawler）</h2>
+    <p class="hint">点击启动后会自动打开浏览器，请用手机小红书 App 扫码登录，随后自动开始采集，无需其他操作。</p>
+    <div class="btn-row">
+      <button class="btn" id="startCrawlBtn">启动采集</button>
+      <button class="btn ghost" id="stopCrawlBtn">停止采集</button>
+    </div>
+    <div id="crawlStatus" class="crawl-status">
+      <div class="cs-row"><span>状态</span><b id="csState">未启动</b></div>
+      <div class="cs-row"><span>已采集笔记</span><b id="csNotes">0</b></div>
+      <div class="cs-row"><span>已采集评论</span><b id="csComments">0</b></div>
+      <div class="cs-row"><span>启动时间</span><b id="csStarted">—</b></div>
+    </div>
+    <div class="progress"><div id="csBar" class="progress-fill" style="width:0%"></div></div>
+    <details><summary>采集日志（出问题时展开看）</summary>
+      <pre id="csLog" class="log-box">暂无日志</pre>
+    </details>
+    <p class="hint">采集不必一次跑完：随时可停止，之后再次启动会继续。已有数据即可进入下一步分析。</p>
+    <button class="btn ghost" id="toStep3Btn">下一步：标签数据分析</button>
+  </div>
+</section>
+
+<!-- ============ Step 3 标签数据分析 ============ -->
+<section id="sec3" class="sec">
+  <div class="card">
+    <h2>标签数据分析</h2>
+    <p class="hint">自动完成：内容自动打标签（9 类）→ 流量分布统计 → 算法契合度回归 → 流量池画像。</p>
+    <button class="btn" id="analyzeBtn">一键分析</button>
+    <p id="analyzeMsg" class="msg"></p>
+    <div id="analyzeResult" class="hidden">
+      <h3>核心结论</h3>
+      <div id="metaCards" class="meta-cards"></div>
+      <h3>关键词赛道对比（中位互动）</h3>
+      <div id="kwBars" class="bars"></div>
+      <h3>内容品类结构</h3>
+      <div id="catTable" class="tbl-wrap"></div>
+      <h3>算法契合度：各因素解释力</h3>
+      <div id="fitBars" class="bars"></div>
+      <h3>流量池层级画像（什么特征随升池变化）</h3>
+      <div id="bucketTable" class="tbl-wrap"></div>
+      <div class="btn-row">
+        <a class="btn ghost link-btn" href="/reports/report.html" target="_blank">查看完整流量报告</a>
+        <a class="btn ghost link-btn" href="/reports/report_fit.html" target="_blank">查看契合度报告</a>
+        <button class="btn" id="toStep4Btn">下一步：入场建议</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Step 4 入场建议 ============ -->
+<section id="sec4" class="sec">
+  <div class="card">
+    <h2>入场建议</h2>
+    <p class="hint">基于真实数据生成赛道评分与定位建议；配置了大模型 API Key 可选 AI 润色。</p>
+    <div class="btn-row">
+      <button class="btn" id="adviceBtn">生成入场建议</button>
+      <label class="chk"><input type="checkbox" id="useLlm"> 使用大模型润色</label>
+    </div>
+    <p id="adviceEngine" class="msg"></p>
+    <div id="adviceResult" class="hidden">
+      <div id="llmAdvice" class="llm-box hidden"></div>
+      <h3>品类机会评分</h3>
+      <div id="nicheCards" class="niche-grid"></div>
+      <h3>推荐定位</h3>
+      <div id="recommended" class="rec-list"></div>
+      <h3>对标笔记（真实数据里的高互动案例）</h3>
+      <div id="benchmarks" class="bench-list"></div>
+      <button class="btn" id="toStep5Btn">下一步：运营方案</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ Step 5 运营方案 ============ -->
+<section id="sec5" class="sec">
+  <div class="card">
+    <h2>30 天运营方案</h2>
+    <div id="planBox">
+      <p class="hint">生成入场建议后自动出现。方案由数据驱动的规则引擎生成。</p>
+    </div>
+    <button class="btn ghost" id="copyPlanBtn">复制全部方案文本</button>
+  </div>
+</section>
+
+<footer>
+  <p>教学演示工具 · 数据仅供个人学习分析 · 请遵守平台条款并控制采集频率</p>
+</footer>
+
+<script src="/app.js"></script>
+</body>
+</html>

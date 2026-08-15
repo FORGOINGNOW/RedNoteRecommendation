@@ -2,6 +2,26 @@
 
 交互式教学模拟器，直观展示小红书类内容平台的推荐机制。前端零依赖，后端算法层由 **Python + numpy** 实现。
 
+## 三个入口
+
+| 入口 | 说明 |
+|---|---|
+| **赛道筛选 AI 助手（推荐新手）** | 双击 `assistant/start_assistant.bat` → 五步向导：赛道分析 → 数据采集 → 标签数据分析 → 入场建议 → 运营方案，全程可视化操作 |
+| 推荐链路模拟器 | 双击 `start.bat`（或 `index.html`），可视化「召回→粗排→精排→重排」与流量池晋级 |
+| 真实数据分析 | `realtime_analysis/run_analysis.bat` 生成流量分布 + 算法契合度报告 |
+
+## 赛道筛选 AI 助手（assistant/）
+
+面向零基础用户的五步向导：
+
+1. **赛道分析**：填写想做的赛道关键词，配置采集规模（可选填 DeepSeek API Key 让建议更个性化）
+2. **数据采集**：一键启动开源采集器 MediaCrawler，扫码登录后自动采集，实时进度条
+3. **标签数据分析**：自动完成 9 类内容打标、流量分布统计、算法契合度回归、流量池画像
+4. **入场建议**：规则引擎给每个品类打分（蓝海/红海判断）+ 推荐定位 + 对标笔记（可选大模型润色）
+5. **运营方案**：30 天三阶段计划、发布节奏、标题公式、KPI 与风险提示
+
+依赖：Python（标准库即可运行助手服务）+ MediaCrawler 及其 venv（pandas/matplotlib/jieba，仅分析时使用）。
+
 ## 运行方式
 
 ### 方式一：完整模式（推荐，Python 算法引擎）
@@ -65,6 +85,7 @@ algorithms.py  Python 底层算法（numpy，核心）
 server.py      HTTP 服务与 API 路由
 start.bat      一键启动
 realtime_analysis/   真实数据采集分析模块（依赖 MediaCrawler）
+assistant/           赛道筛选 AI 助手（五步向导，新手入口）
 ```
 
 ## 真实流量分析（realtime_analysis）
