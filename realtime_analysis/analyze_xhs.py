@@ -45,6 +45,53 @@ FONT_PATH_CANDIDATES = [
     r"C:\Windows\Fonts\simhei.ttf",
 ]
 
+# ---------------- AI 内容分类（规则优先级从高到低，先命中者胜） ----------------
+# 用户 7 类：学习/探索/具体应用/吃瓜/科普/前沿学术/教程·买课
+# 数据驱动补充 2 类：AI生成内容（动漫短剧绘画娱乐）、观点讨论（行业观点/焦虑/趋势）
+CATEGORY_RULES = [
+    ("教程·买课", ["教程", "课程", "教你", "手把手", "保姆级", "网课", "训练营", "陪跑", "私教",
+                   "知识付费", "全套", "从入门到精通", "报名", "领取", "免费资料", "1对1", "打卡群", "社群"], 1),
+    ("吃瓜", ["爆料", "裁员", "降薪", "翻车", "争议", "道歉", "内幕", "八卦", "大瓜", "震惊", "反转",
+              "离职", "暴雷", "崩了", "股价", "融资", "收购", "上市", "重磅", "官宣", "起诉", "打脸",
+              "撕逼", "离谱", "没想到", "发布", "推出", "上新", "升级", "涨价", "降价", "大战", "针对",
+              "封锁", "制裁", "退出", "停更", "不更新", "破解", "被裁", "裁掉", "裁", "大厂", "机构",
+              "月薪", "支出", "创始人", "副总裁", "马斯克", "奥特曼", "扎克伯格", "黄仁勋", "沸沸扬扬",
+              "对抗", "打不过", "看不懂", "复刻", "扒"], 2),
+    ("前沿学术", ["论文", "arxiv", "学术", "模型架构", "架构", "算法", "顶会", "benchmark", "评测", "开源模型",
+                  "训练", "推理", "强化学习", "技术解读", "论文解读", "research", "infra", "rl", "参数",
+                  "token", "多模态", "向量", "微调", "rag", "上下文"], 3),
+    ("具体应用", ["工作流", "效率", "副业", "提效", "摸鱼", "办公", "ppt", "写论文", "写代码", "画画",
+                  "做视频", "简历", "面试", "赚钱", "变现", "落地", "实操", "工具推荐", "组合", "用ai",
+                  "ai做", "帮我", "搞定", "效率工具", "打工", "上班", "生产力", "助手", "搭建", "部署",
+                  "开发", "编程", "代码", "翻译", "写作", "剪辑", "文案", "运营", "自媒体", "账号", "自动化"], 4),
+    ("AI生成内容", ["短剧", "动漫", "漫画", "ai绘画", "ai作图", "画风", "meme", "ai音乐", "ai唱歌",
+                    "ai视频", "创意", "生成", "数字人"], 5),
+    ("探索体验", ["体验", "实测", "试用", "尝试", "测评", "上手", "亲测", "折腾", "试了", "用了",
+                  "玩了", "感受", "好玩", "新发现", "解锁", "隐藏功能", "玩法", "试玩", "内测", "抢先"], 6),
+    ("观点讨论", ["恐吓", "痛恨", "焦虑", "替代", "失业", "出路", "看不下去了", "凭啥", "死掉", "获利",
+                  "观点", "感悟", "思考", "建议", "形容", "讨论", "取代", "淘汰", "危机", "趋势", "未来"], 7),
+    ("科普", ["科普", "什么是", "一文看懂", "一图读懂", "原理", "区别", "概念", "白话", "通俗", "图解",
+              "扫盲", "盘点", "解释", "干货", "讲讲", "聊聊", "说清楚", "读懂", "定义"], 8),
+    ("学习", ["学习", "入门", "小白", "从零", "零基础", "自学", "学习路线", "学习计划", "复习", "备考",
+              "自我提升", "成长", "学生党", "考研", "英语"], 9),
+]
+
+CATEGORY_COLORS = {
+    "教程·买课": "#ff2e4d", "吃瓜": "#ffb84d", "前沿学术": "#4d9fff", "具体应用": "#5ad1a1",
+    "AI生成内容": "#ff6b9d", "探索体验": "#c085ff", "观点讨论": "#8ea6ff", "科普": "#4dd0e1",
+    "学习": "#ff8a65", "未分类": "#666",
+}
+
+
+def classify_note(row):
+    """基于标题+正文+标签的关键词规则分类（可按 CATEGORY_RULES 自行调参）"""
+    text = ("%s %s %s" % (row.get("title", ""), row.get("desc", ""), row.get("tags", ""))).lower()
+    for name, kws, _ in sorted(CATEGORY_RULES, key=lambda x: x[2]):
+        for kw in kws:
+            if kw in text:
+                return name
+    return "未分类"
+
 
 def pick_font():
     for f in FONT_PATH_CANDIDATES:
@@ -141,6 +188,10 @@ def load_comments(data_dir):
 def analyze(df, cm, out_dir: Path):
     out_dir.mkdir(parents=True, exist_ok=True)
     report = []  # (section_title, html_block)
+
+    # 0. AI 内容七分类结构
+    df, cat_stats, cat_sections = analyze_categories(df, out_dir)
+    report.extend(cat_sections)
 
     total = len(df)
     n_video = int((df["type"] == "视频").sum())
@@ -288,7 +339,101 @@ def analyze(df, cm, out_dir: Path):
       <div><b>{int((df['interact']>=1000).sum())}</b><span>爆款数(≥1k)</span></div>
       <div><b>{float(df['collect_like'].median()):.2f}</b><span>收藏赞比中位数</span></div>
     </div>"""
-    return summary, report
+    return summary, report, df
+
+
+# ---------------- 品类结构分析 ----------------
+def analyze_categories(df, out_dir: Path):
+    df = df.copy()
+    df["category"] = df.apply(classify_note, axis=1)
+    total_interact = max(df["interact"].sum(), 1)
+
+    g = df.groupby("category")
+    stats = g.agg(
+        笔记数=("note_id", "count"),
+        总互动=("interact", "sum"),
+        中位互动=("interact", "median"),
+        爆款数=("interact", lambda s: int((s >= 1000).sum())),
+        收藏赞比=("collect_like", "median"),
+        视频占比=("type", lambda s: (s == "视频").mean()),
+    )
+    stats["笔记占比"] = stats["笔记数"] / len(df)
+    stats["互动占比"] = stats["总互动"] / total_interact
+    stats["评论占比"] = df.groupby("category").apply(
+        lambda x: x["comment"].sum() / max(x["interact"].sum(), 1), include_groups=False)
+    stats["爆款率"] = stats["爆款数"] / stats["笔记数"]
+    stats = stats.sort_values("笔记数", ascending=False)
+
+    # 供给-效率四象限定位
+    med_note_share = stats["笔记占比"].median()
+    med_interact = stats["中位互动"].median()
+
+    def position(row):
+        hi_supply = row["笔记占比"] >= med_note_share
+        hi_eff = row["中位互动"] >= med_interact
+        if hi_supply and hi_eff:
+            return "成熟赛道（供给大·流量高）"
+        if not hi_supply and hi_eff:
+            return "蓝海机会（供给小·流量高）"
+        if hi_supply and not hi_eff:
+            return "红海内卷（供给大·流量低）"
+        return "冷门（供给小·流量低）"
+
+    stats["定位"] = stats.apply(position, axis=1)
+
+    fig, axes = plt.subplots(1, 2, figsize=(12.5, 4.8))
+    # 左：供给 vs 流量占比
+    x = range(len(stats))
+    w = 0.38
+    axes[0].bar([i - w / 2 for i in x], stats["笔记占比"], w, label="笔记占比（供给）", color="#4d9fff")
+    axes[0].bar([i + w / 2 for i in x], stats["互动占比"], w, label="互动占比（流量）", color="#ff2e4d")
+    axes[0].set_xticks(list(x))
+    axes[0].set_xticklabels(stats.index, rotation=30, ha="right", fontsize=9)
+    axes[0].set_title("各品类：内容供给 vs 流量需求")
+    axes[0].legend()
+    axes[0].tick_params(colors="white")
+    # 右：供给-效率散点
+    colors = [CATEGORY_COLORS.get(c, "#666") for c in stats.index]
+    axes[1].scatter(stats["笔记占比"], stats["中位互动"], s=stats["爆款数"] * 30 + 80,
+                    c=colors, alpha=0.85, edgecolors="white", linewidths=0.5)
+    for name, row in stats.iterrows():
+        axes[1].annotate(name, (row["笔记占比"], row["中位互动"]),
+                         xytext=(5, 5), textcoords="offset points", fontsize=9, color="#ccc")
+    axes[1].axvline(med_note_share, color="#666", ls="--", lw=0.8)
+    axes[1].axhline(med_interact, color="#666", ls="--", lw=0.8)
+    axes[1].set_xlabel("笔记占比（供给）")
+    axes[1].set_ylabel("中位互动（流量效率，对数）")
+    axes[1].set_yscale("log")
+    axes[1].set_title("供给-效率定位图（气泡大小=爆款数）")
+    axes[1].tick_params(colors="white")
+    plt.tight_layout()
+    chart_path = out_dir / "chart_category.png"
+    plt.savefig(chart_path, dpi=110, facecolor="#1e1e28")
+    plt.close()
+
+    # 各品类代表笔记
+    top_html = "<h3 style='color:#9a9aa8'>各品类互动 Top3 代表笔记</h3>"
+    for cat in stats.index:
+        sub = df[df["category"] == cat].nlargest(3, "interact")
+        items = "".join(
+            f"<li>{r['interact']:,} 互动 · <a href='{r['note_url']}' target='_blank'>{r['title'][:42]}</a></li>"
+            for _, r in sub.iterrows()
+        )
+        top_html += f"<div class='cat-block'><b style='color:{CATEGORY_COLORS.get(cat,'#ccc')}'>{cat}</b><ul>{items}</ul></div>"
+
+    disp = stats[["笔记数", "笔记占比", "总互动", "互动占比", "中位互动", "爆款数", "爆款率",
+                  "收藏赞比", "评论占比", "视频占比", "定位"]].copy()
+    disp = disp.round({
+        "笔记占比": 3, "互动占比": 3, "中位互动": 0, "爆款率": 2,
+        "收藏赞比": 2, "评论占比": 3, "视频占比": 2,
+    })
+    table_html = disp.to_html(classes="tbl", escape=False)
+
+    uncl = int((df["category"] == "未分类").sum())
+    note = f"<p class='hint'>规则分类（关键词命中，可在 CATEGORY_RULES 中调参）。未分类 {uncl} 条，占比 {uncl/max(len(df),1):.1%}</p>"
+
+    section = [("AI 内容七分类结构", note + table_html + img_html(chart_path) + top_html)]
+    return df, stats, section
 
 
 def img_html(path: Path):
@@ -316,6 +461,8 @@ section{{background:#1e1e28;border:1px solid #32323f;border-radius:12px;padding:
 .summary b{{display:block;font-size:20px;color:#ff2e4d}}
 .summary span{{font-size:11px;color:#9a9aa8}}
 .kw span{{display:inline-block;background:#242430;border:1px solid #32323f;border-radius:12px;padding:3px 10px;margin:3px;font-size:12px}}
+.cat-block{{margin:10px 0}} .cat-block ul{{margin:4px 0 0 18px;font-size:12px;color:#ccc}} .cat-block a{{color:#4d9fff;text-decoration:none}}
+.hint{{color:#9a9aa8;font-size:11px;margin:8px 0}}
 .foot{{color:#5c5c6a;font-size:11px;text-align:center;margin-top:14px}}
 </style></head><body>
 <h1>小红书真实流量分析报告</h1>
@@ -340,6 +487,17 @@ def print_console(summary_text, df):
     kw = df.groupby("keyword").agg(笔记数=("note_id", "count"), 中位互动=("interact", "median"), 总互动=("interact", "sum"))
     print(kw.to_string())
     print("-" * 60)
+    print("AI 内容七分类现状（按笔记数排序）:")
+    if "category" in df.columns:
+        cs = df.groupby("category").agg(
+            笔记数=("note_id", "count"),
+            总互动=("interact", "sum"),
+            中位互动=("interact", "median"),
+            爆款数=("interact", lambda s: int((s >= 1000).sum())),
+            收藏赞比=("collect_like", "median"),
+        ).sort_values("笔记数", ascending=False)
+        print(cs.round(1).to_string())
+    print("-" * 60)
     top3 = df.nlargest(5, "interact")[["title", "interact", "keyword"]]
     for _, r in top3.iterrows():
         print(f"  TOP {r['title'][:38]}... 互动 {r['interact']:,} [{r['keyword']}]")
@@ -362,7 +520,7 @@ def main():
     df = load_notes(args.data_dir)
     cm = load_comments(args.data_dir)
     out_dir = Path(args.out_dir)
-    summary, report = analyze(df, cm, out_dir)
+    summary, report, df = analyze(df, cm, out_dir)
     html = build_html(summary, report, df)
     html_path = out_dir / "report.html"
     html_path.write_text(html, encoding="utf-8")
