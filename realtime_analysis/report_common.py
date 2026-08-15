@@ -11,6 +11,7 @@ REPORTS = [
     ("flow", "流量分布", "report.html"),
     ("fit", "算法契合度", "report_fit.html"),
     ("life", "帖子生命周期", "report_lifecycle.html"),
+    ("search", "搜索需求", "report_search.html"),
     ("compare", "选题对比", "report_compare.html"),
 ]
 
@@ -74,6 +75,7 @@ def build_index(results, out_dir: Path):
             ("流量分布报告", "report.html", "关键词赛道/品类结构/时段/词云/爆款榜"),
             ("算法契合度报告", "report_fit.html", "玩法vs内容vs赛道的解释力回归"),
             ("帖子生命周期报告", "report_lifecycle.html", "互动速率衰减/半衰期/品类生命周期"),
+            ("搜索需求报告", "report_search.html", "用户主动搜索 × 内容供给缺口（蓝海词）"),
             ("选题对比报告", "report_compare.html", "你的选题 vs 全体 vs 随机抽样的行为一致性"),
         ]
     )

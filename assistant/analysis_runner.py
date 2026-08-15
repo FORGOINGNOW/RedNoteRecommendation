@@ -25,6 +25,7 @@ import pandas as pd
 import analyze_fit as F
 import analyze_compare as C
 import analyze_lifecycle as L
+import analyze_search_demand as S
 import analyze_xhs as A
 from report_common import apply_nav, build_index
 
@@ -142,6 +143,23 @@ def main():
                 my_kw = _cfg["my_keywords"]
         except (ValueError, OSError):
             pass
+
+    # 搜索需求分析（用户主动搜索 × 供给缺口）
+    search_demand = None
+    sugg_rows = S.load_suggests(args.data_dir)
+    if sugg_rows:
+        weight, raw = S.demand_stats(sugg_rows)
+        terms = list(weight.keys())
+        supply_map = {t: S.supply_count(df, t) for t in terms}
+        gap_list = [{"term": t, "demand": round(weight[t], 2), "raw": raw[t],
+                     "supply": supply_map[t],
+                     "gap": round(weight[t] / max(supply_map[t], 1), 2)}
+                    for t in terms]
+        gap_list.sort(key=lambda x: -x["demand"])
+        blue = [g for g in gap_list if g["supply"] < 5][:15]
+        search_demand = {"n_terms": len(gap_list), "n_records": len(sugg_rows),
+                         "top": gap_list[:30], "blue_ocean": blue}
+
     cmp_df = df.copy()
     cmp_df["age_days"] = (now_ts - cmp_df["publish_ts"]) / 86400e3
     cmp_df = cmp_df[cmp_df["age_days"] >= 0.01]
@@ -186,6 +204,7 @@ def main():
                       for k, v in coefs.abs().sort_values(ascending=False).head(8).items()],
         "buckets": bucket_rows,
         "lifecycle": lifecycle,
+        "search_demand": search_demand,
         "compare": compare,
         "top_notes": top_all_list,
         "report_html": str(out_dir / "report.html"),

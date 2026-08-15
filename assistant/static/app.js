@@ -173,6 +173,17 @@ function renderAnalysis(r) {
     $('lifeTable').innerHTML = '<p class="hint">样本不足，暂无生命周期数据</p>';
   }
 
+  const sd = r.search_demand;
+  if (sd && sd.top && sd.top.length) {
+    const rows = sd.top.slice(0, 15).map(x =>
+      '<tr><td>' + esc(x.term) + '</td><td>' + x.demand.toFixed(2) + '</td><td>' + x.raw + '</td>'
+      + '<td>' + x.supply + '</td><td>' + x.gap.toFixed(2) + '</td></tr>').join('');
+    $('searchBox').innerHTML = '<table><thead><tr><th>搜索词</th><th>需求强度</th><th>被联想次数</th><th>笔记供给</th><th>缺口指数</th></tr></thead><tbody>'
+      + rows + '</tbody></table><p class="hint">来自 ' + sd.n_records + ' 条联想词采集记录 · 需求高+供给少的词 = 蓝海选题入口（详情见搜索需求报告）</p>';
+  } else {
+    $('searchBox').innerHTML = '<p class="hint">暂无搜索联想词数据：运行一次采集后自动生成（每日更新已内置该采集）。</p>';
+  }
+
   const cmp = r.compare;
   if (cmp && cmp.rows && cmp.rows.length) {
     const sig = pct => pct >= 0.975 ? '显著偏高' : (pct <= 0.025 ? '显著偏低' : '与整体一致');

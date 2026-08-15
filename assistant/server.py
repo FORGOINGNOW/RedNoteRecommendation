@@ -327,7 +327,7 @@ class Handler(BaseHTTPRequestHandler):
             name = Path(path).name
             base = Path(report_dir())
             if name in ("report.html", "report_fit.html", "report_lifecycle.html",
-                        "report_compare.html", "report_index.html"):
+                        "report_compare.html", "report_index.html", "report_search.html"):
                 return self._send_file(base / name, name)
         # 助手前端静态文件
         base = HERE / "static"
