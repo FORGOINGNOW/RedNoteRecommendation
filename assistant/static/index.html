@@ -44,6 +44,9 @@
           <label class="fld">MediaCrawler 目录（自动检测，找不到时手动填）
             <input type="text" id="mediaDir" placeholder="例如 E:\MediaCrawler">
           </label>
+          <label class="fld">我的选题关键词（用于选题对比分析）
+            <input type="text" id="myKeywords" placeholder="例如 英文学习,AI">
+          </label>
           <label class="fld">API Key<input type="password" id="llmKey" placeholder="DeepSeek API Key（可选）"></label>
           <label class="fld">接口地址<input type="text" id="llmUrl" value="https://api.deepseek.com"></label>
           <label class="fld">模型<input type="text" id="llmModel" value="deepseek-chat"></label>
@@ -104,10 +107,14 @@
       <h3>帖子生命周期（互动 × 发布时长）</h3>
       <div id="lifeCards" class="meta-cards"></div>
       <div id="lifeTable" class="tbl-wrap"></div>
+      <h3>选题对比（我的选题 vs 全体 vs 随机抽样）</h3>
+      <div id="compareBox" class="tbl-wrap"></div>
       <div class="btn-row">
-        <a class="btn ghost link-btn" href="/reports/report.html" target="_blank">查看完整流量报告</a>
-        <a class="btn ghost link-btn" href="/reports/report_fit.html" target="_blank">查看契合度报告</a>
-        <a class="btn ghost link-btn" href="/reports/report_lifecycle.html" target="_blank">查看生命周期报告</a>
+        <a class="btn ghost link-btn" href="/reports/report_index.html" target="_blank">报告中心</a>
+        <a class="btn ghost link-btn" href="/reports/report.html" target="_blank">流量分布</a>
+        <a class="btn ghost link-btn" href="/reports/report_fit.html" target="_blank">契合度</a>
+        <a class="btn ghost link-btn" href="/reports/report_lifecycle.html" target="_blank">生命周期</a>
+        <a class="btn ghost link-btn" href="/reports/report_compare.html" target="_blank">选题对比</a>
         <button class="btn" id="toStep4Btn">下一步：入场建议</button>
       </div>
     </div>

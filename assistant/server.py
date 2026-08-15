@@ -58,6 +58,7 @@ def load_config():
     default = {
         "media_dir": "",
         "keywords": "AI,Agent,人工智能,英文学习,职场转型,大模型应用",
+        "my_keywords": "英文学习,AI",
         "max_notes": 100,
         "llm": {"api_key": "", "base_url": "https://api.deepseek.com", "model": "deepseek-chat"},
     }
@@ -156,8 +157,8 @@ def env_info(cfg):
         "notes": notes,
         "comments": comments,
         "results_exists": RESULTS_FILE.exists(),
-        "config": {"keywords": cfg["keywords"], "max_notes": cfg["max_notes"],
-                   "llm_key_set": bool(cfg["llm"].get("api_key"))},
+        "config": {"keywords": cfg["keywords"], "my_keywords": cfg.get("my_keywords", "英文学习,AI"),
+                   "max_notes": cfg["max_notes"], "llm_key_set": bool(cfg["llm"].get("api_key"))},
     }
 
 
@@ -189,6 +190,7 @@ def handle_api(handler, method, path, body):
 
     if method == "POST" and path == "/api/config":
         cfg["keywords"] = str(body.get("keywords", cfg["keywords"])).strip() or cfg["keywords"]
+        cfg["my_keywords"] = str(body.get("my_keywords", cfg.get("my_keywords", "英文学习,AI"))).strip() or cfg["my_keywords"]
         cfg["max_notes"] = int(body.get("max_notes", cfg["max_notes"]))
         if body.get("media_dir"):
             cfg["media_dir"] = str(body["media_dir"]).strip()
@@ -324,7 +326,8 @@ class Handler(BaseHTTPRequestHandler):
         if path.startswith("/reports/"):
             name = Path(path).name
             base = Path(report_dir())
-            if name in ("report.html", "report_fit.html"):
+            if name in ("report.html", "report_fit.html", "report_lifecycle.html",
+                        "report_compare.html", "report_index.html"):
                 return self._send_file(base / name, name)
         # 助手前端静态文件
         base = HERE / "static"

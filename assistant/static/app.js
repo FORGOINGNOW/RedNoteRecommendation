@@ -47,6 +47,7 @@ async function loadEnv() {
   $('kwInput').value = env.config.keywords;
   $('maxNotes').value = env.config.max_notes;
   $('maxNotesVal').textContent = env.config.max_notes;
+  $('myKeywords').value = env.config.my_keywords || '英文学习,AI';
   $('llmKey').value = '';
   if (env.config.llm_key_set) $('llmKey').placeholder = '已配置（留空则保持不变）';
   if (env.media_dir) $('mediaDir').value = env.media_dir;
@@ -63,6 +64,7 @@ $('maxNotes').addEventListener('input', () => {
 $('saveCfgBtn').addEventListener('click', async () => {
   const body = {
     keywords: $('kwInput').value.trim(),
+    my_keywords: $('myKeywords').value.trim(),
     max_notes: +$('maxNotes').value,
     media_dir: $('mediaDir').value.trim(),
     llm: { api_key: $('llmKey').value, base_url: $('llmUrl').value, model: $('llmModel').value },
@@ -169,6 +171,19 @@ function renderAnalysis(r) {
     $('lifeTable').innerHTML = '<table><thead><tr><th>发布后</th><th>笔记数</th><th>中位互动</th><th>中位日均互动</th><th>爆款率</th></tr></thead><tbody>' + rows + '</tbody></table>';
   } else {
     $('lifeTable').innerHTML = '<p class="hint">样本不足，暂无生命周期数据</p>';
+  }
+
+  const cmp = r.compare;
+  if (cmp && cmp.rows && cmp.rows.length) {
+    const sig = pct => pct >= 0.975 ? '显著偏高' : (pct <= 0.025 ? '显著偏低' : '与整体一致');
+    const rows = cmp.rows.map(x =>
+      '<tr><td>' + esc(x.label) + '</td><td>' + x.mine + '</td><td>' + x.overall + '</td>'
+      + '<td>' + x.mean.toFixed(0) + '±' + x.std.toFixed(0) + '</td><td>' + x.z + '</td>'
+      + '<td>' + (x.pct * 100).toFixed(0) + '%</td><td>' + sig(x.pct) + '</td></tr>').join('');
+    $('compareBox').innerHTML = '<table><thead><tr><th>指标</th><th>我的选题</th><th>全体</th><th>随机样本均值±σ</th><th>z值</th><th>百分位</th><th>判断</th></tr></thead><tbody>'
+      + rows + '</tbody></table><p class="hint">我的选题：' + esc(cmp.my_keywords) + '（' + cmp.n_mine + ' 条）· 随机抽样 300 次</p>';
+  } else {
+    $('compareBox').innerHTML = '<p class="hint">我的选题样本不足（&lt;5 条），无法对比。可在高级设置中调整「我的选题关键词」后重新分析。</p>';
   }
 }
 

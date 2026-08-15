@@ -14,4 +14,7 @@ echo ===== 算法契合度分析 =====
 echo.
 echo ===== 帖子生命周期分析 =====
 "%PY%" analyze_lifecycle.py
+echo.
+echo ===== 选题对比分析 =====
+"%PY%" analyze_compare.py --data-dir "E:\数据分析\MediaCrawler\data\xhs\jsonl" --my-keywords "英文学习,AI" --out-dir "%~dp0report"
 pause

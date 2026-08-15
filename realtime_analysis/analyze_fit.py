@@ -341,7 +341,8 @@ def main():
     print(bucket.round(3).to_string())
 
     make_charts(df, inc, coefs, bucket, out_dir)
-    html = build_html(df, r2_full, inc, coefs, bucket, out_dir)
+    from report_common import apply_nav
+    html = apply_nav(build_html(df, r2_full, inc, coefs, bucket, out_dir), "fit")
     report_path = out_dir / "report_fit.html"
     report_path.write_text(html, encoding="utf-8")
     print("-" * 64)

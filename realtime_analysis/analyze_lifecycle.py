@@ -302,7 +302,8 @@ def main():
     half_life, fast_ratio, tail_ratio = m["half_life"], m["fast_ratio"], m["tail_ratio"]
 
     make_charts(df, slope_by_cat, half_life, out_dir)
-    html = build_html(df, bucket, cat_life, slope_by_cat, half_life, fast_ratio, tail_ratio, out_dir)
+    from report_common import apply_nav
+    html = apply_nav(build_html(df, bucket, cat_life, slope_by_cat, half_life, fast_ratio, tail_ratio, out_dir), "life")
     report_path = out_dir / "report_lifecycle.html"
     report_path.write_text(html, encoding="utf-8")
 

@@ -541,7 +541,8 @@ def main():
     cm = load_comments(args.data_dir)
     out_dir = Path(args.out_dir)
     summary, report, df = analyze(df, cm, out_dir)
-    html = build_html(summary, report, df)
+    from report_common import apply_nav
+    html = apply_nav(build_html(summary, report, df), "flow")
     html_path = out_dir / "report.html"
     html_path.write_text(html, encoding="utf-8")
     df.to_csv(out_dir / "notes.csv", index=False, encoding="utf-8-sig")
