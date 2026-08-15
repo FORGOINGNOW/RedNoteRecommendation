@@ -64,7 +64,18 @@ app.js         界面渲染与交互编排（双引擎调度）
 algorithms.py  Python 底层算法（numpy，核心）
 server.py      HTTP 服务与 API 路由
 start.bat      一键启动
+realtime_analysis/   真实数据采集分析模块（依赖 MediaCrawler）
 ```
+
+## 真实流量分析（realtime_analysis）
+
+配合开源爬虫 [MediaCrawler](https://github.com/NanmiCoder/MediaCrawler) 采集小红书真实笔记数据，一键生成流量分布报告：
+
+1. 在 MediaCrawler 的 `config/base_config.py` 配置 `KEYWORDS`
+2. 运行 MediaCrawler 采集（输出 jsonl）
+3. 双击 `realtime_analysis/run_analysis.bat` 生成报告
+
+输出：关键词流量分布 / 互动幂律分布与头部集中度 / 图文vs视频 / 发布时间 / 收藏赞比 / 评论热词词云 / 爆款榜 Top20（详见 realtime_analysis/README.md）。数据仅用于个人学习分析，请控制采集频率。
 
 ## 与真实系统的对应
 
